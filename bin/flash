@@ -6,34 +6,31 @@ require 'json'
 require 'flash'
 
 csv_opts = {}
-csv_file = nil
 json = {}
 
 OptionParser.new do |opts|
-  opts.banner = "Usage: flash.rb [options]"
+  opts.banner = "Usage: flash [options]"
 
   opts.on("-F", "--field-separator [FS]") do |fs|
     csv_opts[:col_sep] = fs
   end
 
-  opts.on("-f", "--file [FILE]") do |file|
-    csv_file = file
-  end
-
-  opts.on("-q", "--query [QUERY]") do |q|
+  opts.on("-f", "--file [QUERY]") do |q|
     json = JSON.parse(File.read(q), :symbolize_names => true)
   end
 end.parse!
 
-ss = Spreadsheet.new(csv_file ? CSV.read(csv_file, csv_opts) : [])
-nodes = (json[:nodes] || [{id: 0}]).map { |node| 
-  Node.new node, ss.row_bounds, ss.col_bounds
-}
-edges = (json[:edges] || []).map {|edge| Edge.new edge}
-outputs = json[:outputs] || []
-root = nodes[0]
-
-Results.new(edges, nodes, ss, root).each { |match|
-  puts outputs.map {|output| match[output] || ''}.join "\t"
-}
+ARGV.each do |csv_file|
+  ss = Spreadsheet.new CSV.read(csv_file, csv_opts)
+  nodes = (json[:nodes] || []).map { |node| 
+    Node.new node, ss.row_bounds, ss.col_bounds
+  }
+  edges = (json[:edges] || []).map {|edge| Edge.new edge}
+  root = nodes[0]
+  
+  Results.new(edges, nodes, ss, root).each { |match|
+    n = nodes.select {|node| node.id[0] != '_'}
+    puts n.map {|node| match[node.id] || ''}.join(csv_opts[:col_sep] || "\t")
+  }
+end
 

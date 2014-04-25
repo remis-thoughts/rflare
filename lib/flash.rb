@@ -36,11 +36,11 @@ end
 
 class Node
   def initialize node, row_bounds, col_bounds
-    @id = node[:id] || 0
+    @id = node[:id] || '_'
     @match = Regexp.new(node[:match] || '.*')
     @valid = Square.new(
-      parse_range(node[:rows], row_bounds),
-      parse_range(node[:columns], col_bounds))
+      Spec.new(node[:rows] || '0:*').range(0, row_bounds),
+      Spec.new(node[:columns] || '0:*').range(0, col_bounds))
   end
 
   attr_reader :id, :match, :valid
@@ -48,32 +48,12 @@ class Node
   def matches ss, row, col
     @valid.include? row, col and (ss[row,col] || '').to_s =~ @match
   end
-
-  private
-
-  def parse_range it, bounds
-    if it.nil?
-      bounds
-    elsif it.is_a? Numeric
-      it .. it
-    elsif it.is_a? Array
-      if it.empty?
-        bounds
-      elsif it.size == 1
-        bounds.cap(it[0] || bounds.min) .. bounds.max
-      else
-        bounds.cap(it[0] || bounds.min) .. bounds.cap(it[1] || bounds.max)
-      end
-    else
-      raise "invalid range '#{it}'"
-    end
-  end
 end
 
 class Spec
   def initialize spec
-    raise "invalid spec '#{spec}'" if spec !~ /[+-]?([0-9]+|\*)(:[+-]?([0-9]+|\*))?/
-    @spec = spec
+    @spec = spec.to_s
+    raise "invalid spec '#{@spec}'" if @spec !~ /[+-]?([0-9]+|\*)(:[+-]?([0-9]+|\*))?/
   end
 
   # + or - means relative to num, otherwise absolute

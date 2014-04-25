@@ -95,7 +95,7 @@ class FlashNodeTest < Minitest::Test
 
   def test_match
     n = Node.new ({:rows => 0}), @ss.row_bounds, @ss.col_bounds
-    assert_equal Square.new(0..0, 0...3), n.valid
+    assert_equal Square.new(0..0, 0..2), n.valid
     assert n.matches @ss, 0, 0
     assert n.matches @ss, 0, 1
     assert n.matches @ss, 0, 2
@@ -241,7 +241,7 @@ class FlashResultsTest < Minitest::Test
   end
 
   def test_withrowlimit
-    nodes = [node(3, '^[A-Za-z]+$', [1, nil], 0)]
+    nodes = [node(3, '^[A-Za-z]+$', '1:*', 0)]
     edges = []
     expected = [
       {3 => 'Albania'},
@@ -255,12 +255,12 @@ class FlashResultsTest < Minitest::Test
 
   def test_frompaper
     nodes = [
-      node('c', '^[A-Za-z]+$', [1,nil], 0),
-      node('v','^[0-9]+$', [1,nil], nil), 
+      node('c', '^[A-Za-z]+$', '1:*', 0),
+      node('v','^[0-9]+$', '1:*', nil), 
       node('vcol', '^value$', 0, nil),
-      node('y','^19[0-9]{2}$', [1,nil], nil), 
+      node('y','^19[0-9]{2}$', '1:*', nil), 
       node('ycol', '^year$', 0, nil),
-      node('m','^[A-Za-z 0-9]*$', [1,nil], nil), 
+      node('m','^[A-Za-z 0-9]*$', '1:*', nil), 
       node('mcol', '^Comments$', 0, nil),
     ]
     edges = [

@@ -1,6 +1,18 @@
 require 'minitest/autorun'
 require 'flash'
 
+class Hash
+  def <=> other
+    k = keys.sort <=> other.keys.sort
+    return k if k != 0
+    keys.sort.each {|key|
+      k = self[key] <=> other[key]
+      return k if k != 0
+    }
+    0
+  end
+end
+
 class FlashRangeTest < Minitest::Test
   def test_in
     assert_equal 4, (2..5).cap(4)
@@ -97,11 +109,35 @@ class FlashResultsTest < Minitest::Test
     Node.new hash, @ss.row_bounds, @ss.col_bounds
   end
 
+  def edge from, to, vert = nil, horiz = nil
+    hash = {:from => from, :to => to, :vert => vert, :horiz => horiz}
+    Edge.new hash
+  end
+
   def test_single
     nodes = [node(3, '^value$')]
     edges = []
     expected = [{3 => 'value'}, {3 => 'value'}]
     assert_equal expected, Results.new(edges, nodes, @ss, nodes[0]).to_a
+  end
+
+  def test_oneedge
+    nodes = [node(4,'^[0-9]+$'), node(3, '^value$')]
+    edges = [edge(4, 3, '-*')]
+    expected = [
+      {3 => 'value', 4 => 1000},
+      {3 => 'value', 4 => 3139},
+      {3 => 'value', 4 =>  541},
+      {3 => 'value', 4 => 2964},
+      {3 => 'value', 4 => 2416},
+      {3 => 'value', 4 =>  930},
+      {3 => 'value', 4 => 3177},
+      {3 => 'value', 4 =>  601},
+      {3 => 'value', 4 => 3259},
+      {3 => 'value', 4 => 2503}
+    ]
+    actual = Results.new(edges, nodes, @ss, nodes[0]).to_a
+    assert_equal expected.sort, actual.sort
   end
 end
 

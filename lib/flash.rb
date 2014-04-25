@@ -46,7 +46,7 @@ class Node
   attr_reader :id, :match, :valid
 
   def matches ss, row, col
-    @valid.include? row, col and (ss[row,col] || '') =~ @match
+    @valid.include? row, col and (ss[row,col] || '').to_s =~ @match
   end
 
   private
@@ -132,8 +132,9 @@ class Results
   def initialize edges, nodes, ss, root
     @ss, @root = ss, root
     @edges_byfrom = Hash.new {|h,k| h[k] = [] }
-    edges.map {|edge| @edges_byfrom[edge.from] << edge }
-    @nodes_byid = Hash.new nodes.map {|node| [node.id, node]}
+    edges.each {|edge| @edges_byfrom[edge.from] << edge }
+    @nodes_byid = Hash.new
+    nodes.each {|node| @nodes_byid[node.id] = node}
   end
 
   include Enumerable
@@ -154,12 +155,15 @@ private
     edges = @edges_byfrom[node.id]
     return [me] if edges.empty?
 
-    # get array of lazy iterators over matches for my edges
+    # get array with dims:
+    # (1) each edge from this
+    # -- we flatten the square-for-each-edge dim
+    # (2) each match (a Hash) from edge
     edge_matches = edges.map do |edge|
-      sq = edge.get_square(row, col, ss.row_bounds, ss.col_bounds)
       to = @nodes_byid[edge.to]
-      sq.map {|sq_row, sq_col| 
-        matches sq_row, sq_col, to, ss, edges_byfrom, nodes_byid
+      sq = edge.get_square(row, col, @ss.row_bounds, @ss.col_bounds)
+      sq.flat_map {|sq_row, sq_col| 
+        matches sq_row, sq_col, to
       }
     end
   

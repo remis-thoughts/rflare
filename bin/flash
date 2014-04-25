@@ -25,55 +25,32 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-ss = csv_file ? CSV.read(csv_file, csv_opts) : []
+ss = Spreadsheet.new(csv_file ? CSV.read(csv_file, csv_opts) : [])
 nodes = (json[:nodes] || [{id: 0}]).map { |node| 
-  Node.new node, ss.bounds, ss[0].bounds
+  Node.new node, ss.row_bounds, ss.col_bounds
 }
-edges = (json[:edges] || [])
+edges = (json[:edges] || []).map {|edge| Edge.new edge}
 outputs = json[:outputs] || []
 root = nodes[0]
 
 edges_byfrom = Hash.new {|h,k| h[k] = [] }
-edges.map {|edge| edges_byfrom[edge[:from]] << edge }
+edges.map {|edge| edges_byfrom[edge.from] << edge }
 nodes_byid = Hash.new nodes.map {|node| [node.id, node]}
 
-# spec like[+-]?([0-9]+|\*)
-# + or - means relative to num, otherwise absolute
-def get_range num, bounds, spec
-  if spec == '+*' 
-    bounds.clip(num + 1) .. bounds.max
-  elsif spec == '-*' 
-    bounds.min .. bounds.clip(num - 1)
-  elsif spec[0] == '+' or spec[0] == '-'
-    offset = spec[1, spec.length - 1].to_i
-    col = spec[0] == '+' ? (num + offset) : (num - offset)
-    col .. col
-  else
-    raise "invalid spec #{spec}"
-  end
-end
-
-def linked edge, row, col, ss, nodes_byid
-  
-end
-
-def get_match row, col, node, ss, edges_byfrom, nodes_byid
-  return nil if !node.matches(ss, row, col)
+def matches row, col, node, ss, edges_byfrom, nodes_byid
+  return [] if !node.matches(ss, row, col)
+  me = {node[:id] => ss[row,col]}
   edges = edges_byfrom[node[:id]]
-  return {node[:id] => ss[row][col]} if edges.empty?
+  return me if edges.empty?
   edge_matches = edges.map {|edge|
-    square = Square.new(
-      get_range row, ss.bounds, edge[:vert]
-      get_range col, ss.bounds[0], edge[:horiz])
   }
 
 end
 
 # start at root, looking for trees
-root.all_cells_in_range {|row, col|
-  match = get_match row, col, root, ss, edges_byfrom, nodes_byid
-  if match
+root.each {|row, col|
+  matches(row, col, root, ss, edges_byfrom, nodes_byid) { |match|
     puts outputs.map {|output| match[output] || ''}.join '\t'
-  end
+  }
 }
 

@@ -28,6 +28,10 @@ class Square
   def include? row, col
     @rows.include? row and @columns.include? col
   end
+
+  def == other
+    @rows == other.rows and @columns == other.columns
+  end
 end
 
 class Node
@@ -42,7 +46,7 @@ class Node
   attr_reader :id, :match, :columns, :rows
 
   def matches ss, row, col
-    @valid.include? row, col and ss[row][col] =~ @match
+    @valid.include? row, col and (ss[row,col] || '') =~ @match
   end
 
   private
@@ -64,5 +68,63 @@ class Node
       raise "invalid range '#{it}'"
     end
   end
+end
+
+class Edge
+  def initialize edge
+    @from, @to = edge[:from], edge[:to]
+    raise "edges need 'from' and 'to'" if @from.nil? or @to.nil?
+    @vert = edge[:vert] || '+0'
+    @horiz = edge[:horiz] || '+0'
+    
+  end
+
+  attr_reader :from, :to
+
+  def get_square row, col, row_bounds, col_bounds
+     Square.new(
+      get_range(row, row_bounds, @vert),
+      get_range(col, col_bounds, @horiz))
+  end
+
+  private
+
+  # spec like[+-]?([0-9]+|\*)
+  # + or - means relative to num, otherwise absolute
+  def get_range num, bounds, spec
+    if spec == '+*'
+      if num >= bounds.max
+        num ... num # empty
+      else
+        bounds.cap(num + 1) .. bounds.max
+      end
+    elsif spec == '-*' 
+      bounds.min ... bounds.cap(num)
+    elsif spec[0] == '+' or spec[0] == '-'
+      offset = spec[1, spec.length - 1].to_i
+      col = spec[0] == '+' ? (num + offset) : (num - offset)
+      col .. col
+    else
+      raise "invalid spec #{spec}"
+    end
+  end
+end
+
+class Spreadsheet
+  def initialize arr_of_rows
+    @data = arr_of_rows
+    @row_bounds = @data.bounds
+    @col_bounds = @data.empty? ? (0...0) : @data[0].bounds
+  end
+
+  def [] row, col
+    if @row_bounds.include? row and @col_bounds.include? col
+      @data[row][col]
+    else
+      nil
+    end
+  end
+
+  attr_reader :row_bounds, :col_bounds
 end
 

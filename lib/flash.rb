@@ -83,29 +83,45 @@ class Edge
 
   def get_square row, col, row_bounds, col_bounds
      Square.new(
-      get_range(row, row_bounds, @vert),
-      get_range(col, col_bounds, @horiz))
+      range(row, row_bounds, @vert),
+      range(col, col_bounds, @horiz))
   end
 
   private
 
   # spec like[+-]?([0-9]+|\*)
   # + or - means relative to num, otherwise absolute
-  def get_range num, bounds, spec
+  def range num, bounds, spec
+    raise "invalid spec '#{spec}'" if spec !~ /[+-]?([0-9]+|\*)(:[+-]?([0-9]+|\*))?/
+    bits = spec.split ":"
+    s = bits.size == 1 ? spec : bits[0]
+    e = bits.size == 1 ? spec : bits[1]
+    range_start(num, bounds, s) .. range_end(num, bounds, e)
+  end
+
+  def range_start num, bounds, spec
     if spec == '+*'
-      if num >= bounds.max
-        num ... num # empty
-      else
-        bounds.cap(num + 1) .. bounds.max
-      end
+      num + 1
     elsif spec == '-*' 
-      bounds.min ... bounds.cap(num)
+      bounds.min
     elsif spec[0] == '+' or spec[0] == '-'
       offset = spec[1, spec.length - 1].to_i
-      col = spec[0] == '+' ? (num + offset) : (num - offset)
-      col .. col
+      spec[0] == '+' ? (num + offset) : (num - offset)
     else
-      raise "invalid spec #{spec}"
+      spec.to_i
+    end
+  end
+
+  def range_end num, bounds, spec
+    if spec == '+*'
+      bounds.max
+    elsif spec == '-*' 
+      num - 1
+    elsif spec[0] == '+' or spec[0] == '-'
+      offset = spec[1, spec.length - 1].to_i
+      spec[0] == '+' ? (num + offset) : (num - offset)
+    else
+      spec.to_i
     end
   end
 end

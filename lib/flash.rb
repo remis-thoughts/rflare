@@ -39,8 +39,8 @@ class Node
     @id = node[:id] || 0
     @match = Regexp.new(node[:match] || '.*')
     @valid = Square.new(
-      parse_range(node[:columns], col_bounds),
-      parse_range(node[:rows], row_bounds))
+      parse_range(node[:rows], col_bounds),
+      parse_range(node[:columns], row_bounds))
   end
 
   attr_reader :id, :match, :valid
@@ -162,11 +162,12 @@ private
     edge_matches = edges.map do |edge|
       to = @nodes_byid[edge.to]
       sq = edge.get_square(row, col, @ss.row_bounds, @ss.col_bounds)
-      sq.flat_map {|sq_row, sq_col| 
+      paths = sq.flat_map do |sq_row, sq_col| 
         matches sq_row, sq_col, to
-      }
+      end
+      paths.select {|a| !a.empty?}
     end
-  
+
     [me].product(*edge_matches).map do |assignments_arr|
       assignments_arr.inject Hash.new, :merge
     end

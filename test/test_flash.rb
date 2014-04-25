@@ -95,35 +95,47 @@ end
 class FlashResultsTest < Minitest::Test
   def setup
     @ss = Spreadsheet.new [
-      [nil,       'value', 'year', 'value', 'year', 'Comments'],
-      ['Albania',   1000,   1950,     930,   1981,     'FRA 1'],
-      ['Austria',   3139,   1951,    3177,   1955,     'FRA 3'],
-      ['Belgium',    541,   1947,     601,   1950,        nil ],
+      [     nil, 'value', 'year', 'value', 'year', 'Comments'],
+      [ 'Albania',  1000,   1950,     930,   1981,     'FRA 1'],
+      [ 'Austria',  3139,   1951,    3177,   1955,     'FRA 3'],
+      [ 'Belgium',   541,   1947,     601,   1950,        nil ],
       ['Bulgaria',  2964,   1947,    3259,   1958,     'FRA 1'],
-      ['Czech',     2416,   1950,    2503,   1960,        'NC']
+      [   'Czech',  2416,   1950,    2503,   1960,        'NC']
     ] 
   end
 
-  def node id, match
-    hash = {:id => id, :match => match}
+  def node id, match, columns = nil, rows = nil
+    hash = {
+      :id => id,
+      :match => match,
+      :columns => columns,
+      :rows => rows
+    }
     Node.new hash, @ss.row_bounds, @ss.col_bounds
   end
 
-  def edge from, to, vert = nil, horiz = nil
+  def edge from, to, vert, horiz
     hash = {:from => from, :to => to, :vert => vert, :horiz => horiz}
     Edge.new hash
   end
+
+  def assert_matches edges, nodes, expected
+    actual = Results.new(edges, nodes, @ss, nodes[0]).to_a
+    assert_equal expected.sort, actual.sort
+  end
+
+  # the tests:
 
   def test_single
     nodes = [node(3, '^value$')]
     edges = []
     expected = [{3 => 'value'}, {3 => 'value'}]
-    assert_equal expected, Results.new(edges, nodes, @ss, nodes[0]).to_a
+    assert_matches edges, nodes, expected
   end
 
   def test_oneedge
     nodes = [node(4,'^[0-9]+$'), node(3, '^value$')]
-    edges = [edge(4, 3, '-*')]
+    edges = [edge(4, 3, '-*', nil)]
     expected = [
       {3 => 'value', 4 => 1000},
       {3 => 'value', 4 => 3139},
@@ -136,8 +148,72 @@ class FlashResultsTest < Minitest::Test
       {3 => 'value', 4 => 3259},
       {3 => 'value', 4 => 2503}
     ]
-    actual = Results.new(edges, nodes, @ss, nodes[0]).to_a
-    assert_equal expected.sort, actual.sort
+    assert_matches edges, nodes, expected
+  end
+
+  def test_twoedges
+    nodes = [
+      node('v','^[0-9]+$'), 
+      node('vcol', '^value$'),
+      node('y','^19[0-9]{2}$'), 
+    ]
+    edges = [
+      edge('v', 'vcol', '-*', nil),
+      edge('v', 'y', nil, '+1')
+    ]
+    expected = [
+      {'vcol' => 'value', 'v' => 1000, 'y' => 1950},
+      {'vcol' => 'value', 'v' => 3139, 'y' => 1951},
+      {'vcol' => 'value', 'v' =>  541, 'y' => 1947},
+      {'vcol' => 'value', 'v' => 2964, 'y' => 1947},
+      {'vcol' => 'value', 'v' => 2416, 'y' => 1950},
+      {'vcol' => 'value', 'v' =>  930, 'y' => 1981},
+      {'vcol' => 'value', 'v' => 3177, 'y' => 1955},
+      {'vcol' => 'value', 'v' =>  601, 'y' => 1950},
+      {'vcol' => 'value', 'v' => 3259, 'y' => 1958},
+      {'vcol' => 'value', 'v' => 2503, 'y' => 1960}
+    ]
+    assert_matches edges, nodes, expected
+  end
+
+  def test_twolevelrecursion
+    nodes = [
+      node('v','^[0-9]+$'), 
+      node('vcol', '^value$'),
+      node('y','^19[0-9]{2}$'), 
+      node('ycol', '^year$'),
+    ]
+    edges = [
+      edge('v', 'vcol', '-*', nil),
+      edge('y', 'ycol', '-*', nil),
+      edge('v', 'y', nil, '+1'),
+    ]
+    expected = [
+      {'vcol' => 'value', 'v' => 1000, 'y' => 1950, 'ycol' => 'year'},
+      {'vcol' => 'value', 'v' => 3139, 'y' => 1951, 'ycol' => 'year'},
+      {'vcol' => 'value', 'v' =>  541, 'y' => 1947, 'ycol' => 'year'},
+      {'vcol' => 'value', 'v' => 2964, 'y' => 1947, 'ycol' => 'year'},
+      {'vcol' => 'value', 'v' => 2416, 'y' => 1950, 'ycol' => 'year'},
+      {'vcol' => 'value', 'v' =>  930, 'y' => 1981, 'ycol' => 'year'},
+      {'vcol' => 'value', 'v' => 3177, 'y' => 1955, 'ycol' => 'year'},
+      {'vcol' => 'value', 'v' =>  601, 'y' => 1950, 'ycol' => 'year'},
+      {'vcol' => 'value', 'v' => 3259, 'y' => 1958, 'ycol' => 'year'},
+      {'vcol' => 'value', 'v' => 2503, 'y' => 1960, 'ycol' => 'year'},
+    ]
+    assert_matches edges, nodes, expected
+  end
+
+  def test_withrowlimit
+    nodes = [node(3, '^[A-Za-z]+$', 0, [1, nil])]
+    edges = []
+    expected = [
+      {3 => 'Albania'},
+      {3 => 'Austria'},
+      {3 => 'Belgium'},
+      {3 => 'Bulgaria'},
+      {3 => 'Czech'},
+    ]
+    assert_matches edges, nodes, expected
   end
 end
 

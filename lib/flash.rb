@@ -70,34 +70,21 @@ class Node
   end
 end
 
-class Edge
-  def initialize edge
-    @from, @to = edge[:from], edge[:to]
-    raise "edges need 'from' and 'to'" if @from.nil? or @to.nil?
-    @vert = edge[:vert] || '+0'
-    @horiz = edge[:horiz] || '+0'
-    [@vert, @horiz].each do |spec|
-      raise "invalid spec '#{spec}'" if spec !~ /[+-]?([0-9]+|\*)(:[+-]?([0-9]+|\*))?/
-    end
+class Spec
+  def initialize spec
+    raise "invalid spec '#{spec}'" if spec !~ /[+-]?([0-9]+|\*)(:[+-]?([0-9]+|\*))?/
+    @spec = spec
   end
-
-  attr_reader :from, :to
-
-  def get_square row, col, row_bounds, col_bounds
-     Square.new(
-      range(row, row_bounds, @vert),
-      range(col, col_bounds, @horiz))
-  end
-
-  private
 
   # + or - means relative to num, otherwise absolute
-  def range num, bounds, spec
-    bits = spec.split ":"
-    s = bits.size == 1 ? spec : bits[0]
-    e = bits.size == 1 ? spec : bits[1]
+  def range num, bounds
+    bits = @spec.split ":"
+    s = bits.size == 1 ? @spec : bits[0]
+    e = bits.size == 1 ? @spec : bits[1]
     range_start(num, bounds, s) .. range_end(num, bounds, e)
   end
+
+private
 
   def range_start num, bounds, spec
     if spec == '+*' or spec == '*'
@@ -123,6 +110,23 @@ class Edge
     else
       spec.to_i
     end
+  end
+end
+
+class Edge
+  def initialize edge
+    @from, @to = edge[:from], edge[:to]
+    raise "edges need 'from' and 'to'" if @from.nil? or @to.nil?
+    @vert = Spec.new(edge[:vert] || '+0')
+    @horiz = Spec.new(edge[:horiz] || '+0')
+  end
+
+  attr_reader :from, :to
+
+  def get_square row, col, row_bounds, col_bounds
+     Square.new(
+      @vert.range(row, row_bounds),
+      @horiz.range(col, col_bounds))
   end
 end
 

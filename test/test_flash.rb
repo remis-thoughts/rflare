@@ -45,62 +45,45 @@ class FlashSquareTest < Minitest::Test
   end
 end
 
-class FlashEdgeTest < Minitest::Test
+class FlashSpecTest < Minitest::Test
   def setup
-    @row_bounds, @col_bounds = 0..10, 0..10
+    @bounds = 0..10
   end
 
-  def test_row_single_relativeconst
-    e = Edge.new :from => 'f', :to => 't', :horiz => '+1'
-    actual = e.get_square 5, 3, @row_bounds, @col_bounds
-    assert_equal Square.new(5..5, 4..4), actual
+  def test_single_relativeconst
+    assert_equal (4..4), Spec.new('+1').range(3, @bounds)
   end 
 
-  def test_row_single_plusstar
-    e = Edge.new :from => 'f', :to => 't', :horiz => '+*'
-    actual = e.get_square 5, 3, @row_bounds, @col_bounds
-    assert_equal Square.new(5..5, 4..@col_bounds.max), actual
+  def test_single_plusstar
+    assert_equal (4..@bounds.max), Spec.new('+*').range(3, @bounds)
   end 
 
-  def test_row_single_plusstar2
-    e = Edge.new :from => 'f', :to => 't', :horiz => '*'
-    actual = e.get_square 5, 3, @row_bounds, @col_bounds
-    assert_equal Square.new(5..5, 4..@col_bounds.max), actual
+  def test_single_plusstar2
+    assert_equal (4..@bounds.max), Spec.new('*').range(3, @bounds)
   end 
 
-  def test_row_minusone
-    e = Edge.new :from => 'f', :to => 't', :horiz => '-1'
-    actual = e.get_square 5, 3, @row_bounds, @col_bounds
-    assert_equal Square.new(5..5, 2..2), actual
+  def test_minusone
+    assert_equal (2..2), Spec.new('-1').range(3, @bounds)
   end 
 
-  def test_row_minusstar
-    e = Edge.new :from => 'f', :to => 't', :horiz => '-*'
-    actual = e.get_square 5, 3, @row_bounds, @col_bounds
-    assert_equal Square.new(5..5, @col_bounds.min..2), actual
+  def test_minusstar
+    assert_equal (@bounds.min..2), Spec.new('-*').range(3, @bounds)
   end 
 
-  def test_row_abs
-    e = Edge.new :from => 'f', :to => 't', :horiz => '1'
-    actual = e.get_square 5, 3, @row_bounds, @col_bounds
-    assert_equal Square.new(5..5, 1..1), actual
+  def test_abs
+    assert_equal (1..1), Spec.new('1').range(3, @bounds)
   end 
 
-  def test_row_range_relativeconst
-    e = Edge.new :from => 'f', :to => 't', :horiz => '+1:+3'
-    actual = e.get_square 5, 3, @row_bounds, @col_bounds
-    assert_equal Square.new(5..5, 4..6), actual
+  def test_range_relativeconst
+    assert_equal (4..6), Spec.new('+1:+3').range(3, @bounds)
   end 
 
-  def test_row_range_star
-    e = Edge.new :from => 'f', :to => 't', :horiz => '+2:+*'
-    actual = e.get_square 5, 3, @row_bounds, @col_bounds
-    assert_equal Square.new(5..5, 5..@col_bounds.max), actual
+  def test_range_star
+    assert_equal (5..@bounds.max), Spec.new('+2:+*').range(3, @bounds)
   end 
 
-  def test_row_invalid
-    assert_raises(RuntimeError) {
-    Edge.new :from => 'f', :to => 't', :horiz => 'hat' }
+  def test_invalid
+    assert_raises(RuntimeError) { Spec.new 'hat' }
   end 
 
 end

@@ -80,3 +80,28 @@ class FlashSpreadsheetTest < Minitest::Test
   end
 end
 
+class FlashResultsTest < Minitest::Test
+  def setup
+    @ss = Spreadsheet.new [
+      [nil,       'value', 'year', 'value', 'year', 'Comments'],
+      ['Albania',   1000,   1950,     930,   1981,     'FRA 1'],
+      ['Austria',   3139,   1951,    3177,   1955,     'FRA 3'],
+      ['Belgium',    541,   1947,     601,   1950,        nil ],
+      ['Bulgaria',  2964,   1947,    3259,   1958,     'FRA 1'],
+      ['Czech',     2416,   1950,    2503,   1960,        'NC']
+    ] 
+  end
+
+  def node id, match
+    hash = {:id => id, :match => match}
+    Node.new hash, @ss.row_bounds, @ss.col_bounds
+  end
+
+  def test_single
+    nodes = [node(3, '^value$')]
+    edges = []
+    expected = [{3 => 'value'}, {3 => 'value'}]
+    assert_equal expected, Results.new(edges, nodes, @ss, nodes[0]).to_a
+  end
+end
+

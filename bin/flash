@@ -33,24 +33,7 @@ edges = (json[:edges] || []).map {|edge| Edge.new edge}
 outputs = json[:outputs] || []
 root = nodes[0]
 
-edges_byfrom = Hash.new {|h,k| h[k] = [] }
-edges.map {|edge| edges_byfrom[edge.from] << edge }
-nodes_byid = Hash.new nodes.map {|node| [node.id, node]}
-
-def matches row, col, node, ss, edges_byfrom, nodes_byid
-  return [] if !node.matches(ss, row, col)
-  me = {node[:id] => ss[row,col]}
-  edges = edges_byfrom[node[:id]]
-  return me if edges.empty?
-  edge_matches = edges.map {|edge|
-  }
-
-end
-
-# start at root, looking for trees
-root.each {|row, col|
-  matches(row, col, root, ss, edges_byfrom, nodes_byid) { |match|
-    puts outputs.map {|output| match[output] || ''}.join '\t'
-  }
+Results.new(edges, nodes, ss, root).each { |match|
+  puts outputs.map {|output| match[output] || ''}.join '\t'
 }
 

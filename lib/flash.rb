@@ -36,14 +36,14 @@ end
 
 class Node
   def initialize node, row_bounds, col_bounds
-    @id = node[:id] || 0,
-    @match = Regexp.new(node[:match] || '.*'),
+    @id = node[:id] || 0
+    @match = Regexp.new(node[:match] || '.*')
     @valid = Square.new(
       parse_range(node[:columns], col_bounds),
       parse_range(node[:rows], row_bounds))
   end
 
-  attr_reader :id, :match, :columns, :rows
+  attr_reader :id, :match, :valid
 
   def matches ss, row, col
     @valid.include? row, col and (ss[row,col] || '') =~ @match
@@ -126,5 +126,47 @@ class Spreadsheet
   end
 
   attr_reader :row_bounds, :col_bounds
+end
+
+class Results
+  def initialize edges, nodes, ss, root
+    @ss, @root = ss, root
+    @edges_byfrom = Hash.new {|h,k| h[k] = [] }
+    edges.map {|edge| @edges_byfrom[edge.from] << edge }
+    @nodes_byid = Hash.new nodes.map {|node| [node.id, node]}
+  end
+
+  include Enumerable
+
+  # start at root, looking for trees
+  def each
+    @root.valid.each {|row, col|
+      matches(row, col, @root).each { |match| yield match }
+    }
+  end
+
+private
+
+  def matches row, col, node
+    return [] if !node.matches(@ss, row, col)
+
+    me = {node.id => @ss[row,col]}
+    edges = @edges_byfrom[node.id]
+    return [me] if edges.empty?
+
+    # get array of lazy iterators over matches for my edges
+    edge_matches = edges.map do |edge|
+      sq = edge.get_square(row, col, ss.row_bounds, ss.col_bounds)
+      to = @nodes_byid[edge.to]
+      sq.map {|sq_row, sq_col| 
+        matches sq_row, sq_col, to, ss, edges_byfrom, nodes_byid
+      }
+    end
+  
+    [me].product(*edge_matches).map do |assignments_arr|
+      assignments_arr.inject Hash.new, :merge
+    end
+  end
+
 end
 

@@ -76,7 +76,9 @@ class Edge
     raise "edges need 'from' and 'to'" if @from.nil? or @to.nil?
     @vert = edge[:vert] || '+0'
     @horiz = edge[:horiz] || '+0'
-    
+    [@vert, @horiz].each do |spec|
+      raise "invalid spec '#{spec}'" if spec !~ /[+-]?([0-9]+|\*)(:[+-]?([0-9]+|\*))?/
+    end
   end
 
   attr_reader :from, :to
@@ -89,10 +91,8 @@ class Edge
 
   private
 
-  # spec like[+-]?([0-9]+|\*)
   # + or - means relative to num, otherwise absolute
   def range num, bounds, spec
-    raise "invalid spec '#{spec}'" if spec !~ /[+-]?([0-9]+|\*)(:[+-]?([0-9]+|\*))?/
     bits = spec.split ":"
     s = bits.size == 1 ? spec : bits[0]
     e = bits.size == 1 ? spec : bits[1]
@@ -100,7 +100,7 @@ class Edge
   end
 
   def range_start num, bounds, spec
-    if spec == '+*'
+    if spec == '+*' or spec == '*'
       num + 1
     elsif spec == '-*' 
       bounds.min
@@ -113,7 +113,7 @@ class Edge
   end
 
   def range_end num, bounds, spec
-    if spec == '+*'
+    if spec == '+*' or spec == '*'
       bounds.max
     elsif spec == '-*' 
       num - 1

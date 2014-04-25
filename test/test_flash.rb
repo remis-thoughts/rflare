@@ -50,47 +50,58 @@ class FlashEdgeTest < Minitest::Test
     @row_bounds, @col_bounds = 0..10, 0..10
   end
 
- def test_row_single_relativeconst
-   e = Edge.new :from => 'f', :to => 't', :horiz => '+1'
-   actual = e.get_square 5, 3, @row_bounds, @col_bounds
-   assert_equal Square.new(5..5, 4..4), actual
- end 
+  def test_row_single_relativeconst
+    e = Edge.new :from => 'f', :to => 't', :horiz => '+1'
+    actual = e.get_square 5, 3, @row_bounds, @col_bounds
+    assert_equal Square.new(5..5, 4..4), actual
+  end 
 
- def test_row_single_plusstar
-   e = Edge.new :from => 'f', :to => 't', :horiz => '+*'
-   actual = e.get_square 5, 3, @row_bounds, @col_bounds
-   assert_equal Square.new(5..5, 4..@col_bounds.max), actual
- end 
+  def test_row_single_plusstar
+    e = Edge.new :from => 'f', :to => 't', :horiz => '+*'
+    actual = e.get_square 5, 3, @row_bounds, @col_bounds
+    assert_equal Square.new(5..5, 4..@col_bounds.max), actual
+  end 
 
- def test_row_minusone
-   e = Edge.new :from => 'f', :to => 't', :horiz => '-1'
-   actual = e.get_square 5, 3, @row_bounds, @col_bounds
-   assert_equal Square.new(5..5, 2..2), actual
- end 
+  def test_row_single_plusstar2
+    e = Edge.new :from => 'f', :to => 't', :horiz => '*'
+    actual = e.get_square 5, 3, @row_bounds, @col_bounds
+    assert_equal Square.new(5..5, 4..@col_bounds.max), actual
+  end 
 
- def test_row_minusstar
-   e = Edge.new :from => 'f', :to => 't', :horiz => '-*'
-   actual = e.get_square 5, 3, @row_bounds, @col_bounds
-   assert_equal Square.new(5..5, @col_bounds.min..2), actual
- end 
+  def test_row_minusone
+    e = Edge.new :from => 'f', :to => 't', :horiz => '-1'
+    actual = e.get_square 5, 3, @row_bounds, @col_bounds
+    assert_equal Square.new(5..5, 2..2), actual
+  end 
 
- def test_row_abs
-   e = Edge.new :from => 'f', :to => 't', :horiz => '1'
-   actual = e.get_square 5, 3, @row_bounds, @col_bounds
-   assert_equal Square.new(5..5, 1..1), actual
- end 
+  def test_row_minusstar
+    e = Edge.new :from => 'f', :to => 't', :horiz => '-*'
+    actual = e.get_square 5, 3, @row_bounds, @col_bounds
+    assert_equal Square.new(5..5, @col_bounds.min..2), actual
+  end 
 
- def test_row_range_relativeconst
-   e = Edge.new :from => 'f', :to => 't', :horiz => '+1:+3'
-   actual = e.get_square 5, 3, @row_bounds, @col_bounds
-   assert_equal Square.new(5..5, 4..6), actual
- end 
+  def test_row_abs
+    e = Edge.new :from => 'f', :to => 't', :horiz => '1'
+    actual = e.get_square 5, 3, @row_bounds, @col_bounds
+    assert_equal Square.new(5..5, 1..1), actual
+  end 
 
- def test_row_range_star
-   e = Edge.new :from => 'f', :to => 't', :horiz => '+2:+*'
-   actual = e.get_square 5, 3, @row_bounds, @col_bounds
-   assert_equal Square.new(5..5, 5..@col_bounds.max), actual
- end 
+  def test_row_range_relativeconst
+    e = Edge.new :from => 'f', :to => 't', :horiz => '+1:+3'
+    actual = e.get_square 5, 3, @row_bounds, @col_bounds
+    assert_equal Square.new(5..5, 4..6), actual
+  end 
+
+  def test_row_range_star
+    e = Edge.new :from => 'f', :to => 't', :horiz => '+2:+*'
+    actual = e.get_square 5, 3, @row_bounds, @col_bounds
+    assert_equal Square.new(5..5, 5..@col_bounds.max), actual
+  end 
+
+  def test_row_invalid
+    assert_raises(RuntimeError) {
+    Edge.new :from => 'f', :to => 't', :horiz => 'hat' }
+  end 
 
 end
 
@@ -131,7 +142,7 @@ end
 class FlashResultsTest < Minitest::Test
   def setup
     @ss = Spreadsheet.new [
-      [     nil, 'value', 'year', 'value', 'year', 'Comments'],
+      [      nil, 'value', 'year', 'value', 'year', 'Comments'],
       [ 'Albania',  1000,   1950,     930,   1981,     'FRA 1'],
       [ 'Austria',  3139,   1951,    3177,   1955,     'FRA 3'],
       [ 'Belgium',   541,   1947,     601,   1950,        nil ],

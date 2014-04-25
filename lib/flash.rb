@@ -39,8 +39,8 @@ class Node
     @id = node[:id] || 0
     @match = Regexp.new(node[:match] || '.*')
     @valid = Square.new(
-      parse_range(node[:rows], col_bounds),
-      parse_range(node[:columns], row_bounds))
+      parse_range(node[:rows], row_bounds),
+      parse_range(node[:columns], col_bounds))
   end
 
   attr_reader :id, :match, :valid

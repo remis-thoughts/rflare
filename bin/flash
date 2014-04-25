@@ -34,6 +34,6 @@ outputs = json[:outputs] || []
 root = nodes[0]
 
 Results.new(edges, nodes, ss, root).each { |match|
-  puts outputs.map {|output| match[output] || ''}.join '\t'
+  puts outputs.map {|output| match[output] || ''}.join "\t"
 }
 

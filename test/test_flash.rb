@@ -75,6 +75,23 @@ class FlashEdgeTest < Minitest::Test
  end 
 end
 
+class FlashNodeTest < Minitest::Test
+  def setup
+    @ss = Spreadsheet.new [[0,1,2],['a','b','c']]
+  end
+
+  def test_match
+    n = Node.new ({:rows => 0}), @ss.row_bounds, @ss.col_bounds
+    assert_equal Square.new(0..0, 0...3), n.valid
+    assert n.matches @ss, 0, 0
+    assert n.matches @ss, 0, 1
+    assert n.matches @ss, 0, 2
+    refute n.matches @ss, 1, 0
+    refute n.matches @ss, 1, 1
+    refute n.matches @ss, 1, 2
+  end
+end
+
 class FlashSpreadsheetTest < Minitest::Test
   def test_empty
     ss = Spreadsheet.new []
@@ -104,7 +121,7 @@ class FlashResultsTest < Minitest::Test
     ] 
   end
 
-  def node id, match, columns = nil, rows = nil
+  def node id, match, rows = nil, columns = nil
     hash = {
       :id => id,
       :match => match,
@@ -126,8 +143,15 @@ class FlashResultsTest < Minitest::Test
 
   # the tests:
 
-  def test_single
+  def test_simplecell
     nodes = [node(3, '^value$')]
+    edges = []
+    expected = [{3 => 'value'}, {3 => 'value'}]
+    assert_matches edges, nodes, expected
+  end
+
+  def test_header
+    nodes = [node(3, '^value$', 0, nil)]
     edges = []
     expected = [{3 => 'value'}, {3 => 'value'}]
     assert_matches edges, nodes, expected
@@ -204,7 +228,7 @@ class FlashResultsTest < Minitest::Test
   end
 
   def test_withrowlimit
-    nodes = [node(3, '^[A-Za-z]+$', 0, [1, nil])]
+    nodes = [node(3, '^[A-Za-z]+$', [1, nil], 0)]
     edges = []
     expected = [
       {3 => 'Albania'},
@@ -212,6 +236,39 @@ class FlashResultsTest < Minitest::Test
       {3 => 'Belgium'},
       {3 => 'Bulgaria'},
       {3 => 'Czech'},
+    ]
+    assert_matches edges, nodes, expected
+  end
+
+  def test_frompaper
+    nodes = [
+      node('c', '^[A-Za-z]+$', [1,nil], 0),
+      node('v','^[0-9]+$', [1,nil], nil), 
+      node('vcol', '^value$', 0, nil),
+      node('y','^19[0-9]{2}$', [1,nil], nil), 
+      node('ycol', '^year$', 0, nil),
+      node('m','^[A-Za-z 0-9]*$', [1,nil], nil), 
+      node('mcol', '^Comments$', 0, nil),
+    ]
+    edges = [
+      edge('v', 'vcol', '-*', nil),
+      edge('y', 'ycol', '-*', nil),
+      edge('m', 'mcol', '-*', nil),
+      edge('c', 'v', nil, '+*'),
+      edge('v', 'y', nil, '+1'),
+      edge('y', 'm', nil, '+*'),
+    ]
+    expected = [
+      {'vcol' => 'value', 'v' => 1000, 'y' => 1950, 'ycol' => 'year', 'c' => 'Albania', 'mcol' => 'Comments', 'm' => 'FRA 1'},
+      {'vcol' => 'value', 'v' => 3139, 'y' => 1951, 'ycol' => 'year', 'c' => 'Austria', 'mcol' => 'Comments', 'm' => 'FRA 3'},
+      {'vcol' => 'value', 'v' =>  541, 'y' => 1947, 'ycol' => 'year', 'c' => 'Belgium', 'mcol' => 'Comments', 'm' => nil},
+      {'vcol' => 'value', 'v' => 2964, 'y' => 1947, 'ycol' => 'year', 'c' => 'Bulgaria', 'mcol' => 'Comments', 'm' => 'FRA 1'},
+      {'vcol' => 'value', 'v' => 2416, 'y' => 1950, 'ycol' => 'year', 'c' => 'Czech', 'mcol' => 'Comments', 'm' => 'NC'},
+      {'vcol' => 'value', 'v' =>  930, 'y' => 1981, 'ycol' => 'year', 'c' => 'Albania', 'mcol' => 'Comments', 'm' => 'FRA 1'},
+      {'vcol' => 'value', 'v' => 3177, 'y' => 1955, 'ycol' => 'year', 'c' => 'Austria', 'mcol' => 'Comments', 'm' => 'FRA 3'},
+      {'vcol' => 'value', 'v' =>  601, 'y' => 1950, 'ycol' => 'year', 'c' => 'Belgium', 'mcol' => 'Comments', 'm' => nil},
+      {'vcol' => 'value', 'v' => 3259, 'y' => 1958, 'ycol' => 'year', 'c' => 'Bulgaria', 'mcol' => 'Comments', 'm' => 'FRA 1'},
+      {'vcol' => 'value', 'v' => 2503, 'y' => 1960, 'ycol' => 'year', 'c' => 'Czech', 'mcol' => 'Comments', 'm' => 'NC'},
     ]
     assert_matches edges, nodes, expected
   end

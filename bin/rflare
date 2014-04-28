@@ -1,0 +1,54 @@
+#!/usr/bin/env ruby
+
+require 'csv'
+require 'optparse'
+require 'tgf'
+require 'rflare'
+
+csv_opts = {}
+nodes, edges = [], []
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: rflare [options]"
+
+  opts.on("-F", "--field-separator [FS]") do |fs|
+    csv_opts[:col_sep] = fs
+  end
+
+  opts.on("-f", "--file [file]") do |file|
+    nodes, edges = TGF.parse(File(q))
+  end
+
+  opts.on("-e", "--evaluate [query]") do |query|
+    nodes, edges = TGF.parse(query, ';')
+  end
+end.parse!
+
+def rows_and_cols str
+  str.nil? ? [nil, nil] : str.split(/\s+/, 2)
+end
+
+ARGV.each do |csv_file|
+  ss = RFlare::Spreadsheet.new(CSV.read(csv_file, csv_opts))
+  my_nodes = nodes.map { |node|
+    if node.label.nil?
+      RFlare::Node.new node.id, nil, nil, nil, ss.row_bounds, ss.col_bounds
+    else
+      m = /^\/(.*\\\/)*.*\/\s*(.*)/.match node.label
+      p m
+      rows, columns = rows_and_cols edge.label
+      RFlare::Node.new node.id, nil, rows, columns, ss.row_bounds, ss.col_bounds
+    end
+  }
+  my_edges = edges.map { |edge|
+    rows, columns = rows_and_cols edge.label
+    RFlare::Edge.new edge.from, edge.to, rows, columns
+  }
+  root = my_nodes[0]
+  
+  RFlare::Results.new(my_edges, my_nodes, ss, root).each { |match|
+    n = my_nodes.select {|node| node.id[0] != '_'}
+    puts n.map {|node| match[node.id] || ''}.join(csv_opts[:col_sep] || "\t")
+  }
+end
+

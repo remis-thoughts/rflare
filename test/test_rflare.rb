@@ -1,5 +1,5 @@
 require 'minitest/autorun'
-require 'flash'
+require 'rflare'
 
 class Hash
   def <=> other
@@ -29,19 +29,19 @@ end
 
 class FlashSquareTest < Minitest::Test
   def test_include_in
-    assert Square.new(2..4, 3..5).include? 3, 4
+    assert RFlare::Square.new(2..4, 3..5).include? 3, 4
   end
 
   def test_include_out
-    refute Square.new(2..4, 3..5).include? 1, 4
+    refute RFlare::Square.new(2..4, 3..5).include? 1, 4
   end
 
   def test_enumerate
-    assert_equal [[2,3], [2,4], [2,5], [3,3], [3,4], [3,5]], Square.new(2..3, 3..5).to_a
+    assert_equal [[2,3], [2,4], [2,5], [3,3], [3,4], [3,5]], RFlare::Square.new(2..3, 3..5).to_a
   end
 
   def test_equals
-    assert_equal Square.new(2..3, 4..5), Square.new(2..3, 4..5)
+    assert_equal RFlare::Square.new(2..3, 4..5), RFlare::Square.new(2..3, 4..5)
   end
 end
 
@@ -51,51 +51,51 @@ class FlashSpecTest < Minitest::Test
   end
 
   def test_single_relativeconst
-    assert_equal (4..4), Spec.new('+1').range(3, @bounds)
+    assert_equal (4..4), RFlare::Spec.new('+1').range(3, @bounds)
   end 
 
   def test_single_plusstar
-    assert_equal (4..@bounds.max), Spec.new('+*').range(3, @bounds)
+    assert_equal (4..@bounds.max), RFlare::Spec.new('+*').range(3, @bounds)
   end 
 
   def test_single_plusstar2
-    assert_equal (4..@bounds.max), Spec.new('*').range(3, @bounds)
+    assert_equal (4..@bounds.max), RFlare::Spec.new('*').range(3, @bounds)
   end 
 
   def test_minusone
-    assert_equal (2..2), Spec.new('-1').range(3, @bounds)
+    assert_equal (2..2), RFlare::Spec.new('-1').range(3, @bounds)
   end 
 
   def test_minusstar
-    assert_equal (@bounds.min..2), Spec.new('-*').range(3, @bounds)
+    assert_equal (@bounds.min..2), RFlare::Spec.new('-*').range(3, @bounds)
   end 
 
   def test_abs
-    assert_equal (1..1), Spec.new('1').range(3, @bounds)
+    assert_equal (1..1), RFlare::Spec.new('1').range(3, @bounds)
   end 
 
   def test_range_relativeconst
-    assert_equal (4..6), Spec.new('+1:+3').range(3, @bounds)
+    assert_equal (4..6), RFlare::Spec.new('+1:+3').range(3, @bounds)
   end 
 
   def test_range_star
-    assert_equal (5..@bounds.max), Spec.new('+2:+*').range(3, @bounds)
+    assert_equal (5..@bounds.max), RFlare::Spec.new('+2:+*').range(3, @bounds)
   end 
 
   def test_invalid
-    assert_raises(RuntimeError) { Spec.new 'hat' }
+    assert_raises(RuntimeError) { RFlare::Spec.new 'hat' }
   end 
 
 end
 
 class FlashNodeTest < Minitest::Test
   def setup
-    @ss = Spreadsheet.new [[0,1,2],['a','b','c']]
+    @ss = RFlare::Spreadsheet.new [[0,1,2],['a','b','c']]
   end
 
   def test_match
-    n = Node.new ({:rows => 0}), @ss.row_bounds, @ss.col_bounds
-    assert_equal Square.new(0..0, 0..2), n.valid
+    n = RFlare::Node.new nil, nil, 0, nil, @ss.row_bounds, @ss.col_bounds
+    assert_equal RFlare::Square.new(0..0, 0..2), n.valid
     assert n.matches @ss, 0, 0
     assert n.matches @ss, 0, 1
     assert n.matches @ss, 0, 2
@@ -107,14 +107,14 @@ end
 
 class FlashSpreadsheetTest < Minitest::Test
   def test_empty
-    ss = Spreadsheet.new []
+    ss = RFlare::Spreadsheet.new []
     assert_equal 0...0, ss.row_bounds
     assert_equal 0...0, ss.col_bounds
     assert_nil ss[0,0]
   end
 
   def test_full
-    ss = Spreadsheet.new [[1,2,3],['a','b','c']]
+    ss = RFlare::Spreadsheet.new [[1,2,3],['a','b','c']]
     assert_equal 0...2, ss.row_bounds
     assert_equal 0...3, ss.col_bounds
     assert_equal 1, ss[0,0]
@@ -124,7 +124,7 @@ end
 
 class FlashResultsTest < Minitest::Test
   def setup
-    @ss = Spreadsheet.new [
+    @ss = RFlare::Spreadsheet.new [
       [      nil, 'value', 'year', 'value', 'year', 'Comments'],
       [ 'Albania',  1000,   1950,     930,   1981,     'FRA 1'],
       [ 'Austria',  3139,   1951,    3177,   1955,     'FRA 3'],
@@ -135,22 +135,15 @@ class FlashResultsTest < Minitest::Test
   end
 
   def node id, match, rows = nil, columns = nil
-    hash = {
-      :id => id,
-      :match => match,
-      :columns => columns,
-      :rows => rows
-    }
-    Node.new hash, @ss.row_bounds, @ss.col_bounds
+    RFlare::Node.new id, match, rows, columns, @ss.row_bounds, @ss.col_bounds
   end
 
   def edge from, to, vert, horiz
-    hash = {:from => from, :to => to, :vert => vert, :horiz => horiz}
-    Edge.new hash
+    RFlare::Edge.new from, to, vert, horiz
   end
 
   def assert_matches edges, nodes, expected
-    actual = Results.new(edges, nodes, @ss, nodes[0]).to_a
+    actual = RFlare::Results.new(edges, nodes, @ss, nodes[0]).to_a
     assert_equal expected.sort, actual.sort
   end
 

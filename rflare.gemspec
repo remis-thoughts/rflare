@@ -9,5 +9,5 @@ Gem::Specification.new do |s|
   s.authors     = ["Nick White"]
 
   s.add_runtime_dependency 'tgf', '~> 1'
-  s.add_development_dependency 'rake'
+  s.add_development_dependency 'rake', '~> 0.9'
 end

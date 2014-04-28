@@ -86,6 +86,14 @@ class FlashSpecTest < Minitest::Test
     assert_raises(RuntimeError) { RFlare::Spec.new 'hat' }
   end 
 
+  def test_range_blank_start
+    assert_equal (@bounds.min..4), RFlare::Spec.new(':4').range(3, @bounds)
+  end 
+
+  def test_range_blank_end
+    assert_equal (1..@bounds.max), RFlare::Spec.new('1:').range(3, @bounds)
+  end 
+
 end
 
 class FlashNodeTest < Minitest::Test

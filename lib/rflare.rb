@@ -55,12 +55,12 @@ module RFlare
   class Spec
     def initialize spec
       @spec = spec.to_s
-      raise "invalid spec '#{@spec}'" if @spec !~ /[+-]?([0-9]+|\*)(:[+-]?([0-9]+|\*))?/
+      raise "invalid spec '#{@spec}'" if @spec !~ /[+-]?([0-9]+|\*)(:([+-]?([0-9]+|\*))?)?/
     end
 
     # + or - means relative to num, otherwise absolute
     def range num, bounds
-      bits = @spec.split ":"
+      bits = @spec.split ":", 2
       s = bits.size == 1 ? @spec : bits[0]
       e = bits.size == 1 ? @spec : bits[1]
       range_start(num, bounds, s) .. range_end(num, bounds, e)
@@ -76,13 +76,15 @@ module RFlare
       elsif spec[0] == '+' or spec[0] == '-'
         offset = spec[1, spec.length - 1].to_i
         spec[0] == '+' ? (num + offset) : (num - offset)
+      elsif spec == ''
+        bounds.min
       else
         spec.to_i
       end
     end
 
     def range_end num, bounds, spec
-      if spec == '+*' or spec == '*'
+      if spec == '+*' or spec == '*' or spec == ""
         bounds.max
       elsif spec == '-*' 
         num - 1

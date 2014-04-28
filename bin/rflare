@@ -34,10 +34,9 @@ ARGV.each do |csv_file|
     if node.label.nil?
       RFlare::Node.new node.id, nil, nil, nil, ss.row_bounds, ss.col_bounds
     else
-      m = /^\/(.*\\\/)*.*\/\s*(.*)/.match node.label
-      p m
-      rows, columns = rows_and_cols edge.label
-      RFlare::Node.new node.id, nil, rows, columns, ss.row_bounds, ss.col_bounds
+      m =  /^\/((?:.*\\\/)*.*)\/\s*(.+)?/.match node.label
+      rows, columns = rows_and_cols m[2]
+      RFlare::Node.new node.id, m[1], rows, columns, ss.row_bounds, ss.col_bounds
     end
   }
   my_edges = edges.map { |edge|
@@ -45,7 +44,7 @@ ARGV.each do |csv_file|
     RFlare::Edge.new edge.from, edge.to, rows, columns
   }
   root = my_nodes[0]
-  
+ 
   RFlare::Results.new(my_edges, my_nodes, ss, root).each { |match|
     n = my_nodes.select {|node| node.id[0] != '_'}
     puts n.map {|node| match[node.id] || ''}.join(csv_opts[:col_sep] || "\t")

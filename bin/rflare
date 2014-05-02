@@ -15,6 +15,10 @@ OptionParser.new do |opts|
     csv_opts[:col_sep] = fs
   end
 
+  opts.on("-Q", "--quote-char [QC]") do |qc|
+    csv_opts[:quote_char] = qc
+  end
+
   opts.on("-f", "--file [file]") do |file|
     nodes, edges = TGF.parse(File(q))
   end
@@ -28,6 +32,7 @@ def rows_and_cols str
   str.nil? ? [nil, nil] : str.split(/\s+/, 2)
 end
 
+out = CSV.new $stdout, csv_opts
 ARGV.each do |csv_file|
   ss = RFlare::Spreadsheet.new(CSV.read(csv_file, csv_opts))
   my_nodes = nodes.map { |node|
@@ -47,7 +52,8 @@ ARGV.each do |csv_file|
  
   RFlare::Results.new(my_edges, my_nodes, ss, root).each { |match|
     n = my_nodes.select {|node| node.id[0] != '_'}
-    puts n.map {|node| match[node.id] || ''}.join(csv_opts[:col_sep] || "\t")
+    out << n.map {|node| match[node.id] || ''}
   }
 end
+out.flush
 

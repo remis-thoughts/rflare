@@ -95,6 +95,8 @@ The next step looks at all the edges reachable from the current matched graphs, 
 
 As no more edges are reachable from each of these match graphs, the matching process has finished and these four match graphs are outputted. This gives the output CSV:
 
+|   |   |   |
+|---|---|---|
 | a | b | c |
 | a | b | c |
 | a | b | c |
@@ -124,6 +126,8 @@ Using row & column specifications a singe node. Graph (either in a file for `rfl
 
 Output:
 
+|          |
+|----------|
 |  Albania |
 |  Austria |
 |  Belgium |
@@ -145,6 +149,8 @@ The graph in single line form, for `rflare`'s `--evaluate` format:
 
 Output:
 
+|      |
+|------|
 | 1000 |
 | 3139 |
 |  541 |
@@ -177,6 +183,8 @@ The example from the paper; output the same data (minus the column headers) as t
     
 Output:
 
+|          |       |      |          |
+|----------|-------|------|----------|
 | Albania  |  1000 | 1950 |   FRA 1  |
 | Albania  |   930 | 1981 |   FRA 1  |
 | Austria  |  3139 | 1951 |   FRA 3  |
